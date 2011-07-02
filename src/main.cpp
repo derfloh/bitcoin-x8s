@@ -1153,6 +1153,20 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
     // Update best block in wallet (so we can detect restored wallets)
     if (!IsInitialBlockDownload())
     {
+        // Support long polling
+        string lp_pid=mapArgs["-pollpidfile"];
+        if(lp_pid != "")
+        {
+            FILE *pidFile = fopen(lp_pid.c_str(), "r");
+            if(pidFile!=NULL)
+            {
+                int pid=0;
+                if ((fscanf(pidFile, "%d", &pid) == 1) && (pid>1))
+                    kill((pid_t) pid, SIGUSR1);
+                fclose(pidFile);
+            }
+        }
+
         const CBlockLocator locator(pindexNew);
         ::SetBestChain(locator);
     }
