@@ -8,7 +8,7 @@ WXINCLUDEPATHS=$(shell wx-config --cxxflags)
 
 WXLIBS=$(shell wx-config --libs)
 
-USE_UPNP:=0
+USE_UPNP:=
 
 DEFS=-DNOPCH -DFOURWAYSSE2 -DUSE_SSL
 
