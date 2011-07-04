@@ -1153,6 +1153,7 @@ bool CBlock::SetBestChain(CTxDB& txdb, CBlockIndex* pindexNew)
     // Update best block in wallet (so we can detect restored wallets)
     if (!IsInitialBlockDownload())
     {
+
         // Support long polling
         string lp_pid=mapArgs["-pollpidfile"];
         if(lp_pid != "")
@@ -2835,14 +2836,14 @@ CBlock* CreateNewBlock(CReserveKey& reservekey)
 
 
 void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce, int64& nPrevTime)
-{
-    // Update nExtraNonce
-    int64 nNow = max(pindexPrev->GetMedianTimePast()+1, GetAdjustedTime());
-    if (++nExtraNonce >= 0x7f && nNow > nPrevTime+1)
+{ // Fix from Luke Dash Jr
+    static uint256 hashPrevBlock;
+    if (hashPrevBlock != pblock->hashPrevBlock)
     {
-        nExtraNonce = 1;
-        nPrevTime = nNow;
+        nExtraNonce = 0;
+        hashPrevBlock = pblock->hashPrevBlock;
     }
+    ++nExtraNonce;   
     pblock->vtx[0].vin[0].scriptSig = CScript() << pblock->nBits << CBigNum(nExtraNonce);
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 }
