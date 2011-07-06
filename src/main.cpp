@@ -2687,6 +2687,34 @@ public:
 };
 
 
+#ifndef __WXMSW__
+int DoCoinbaser_I(CBlock* pblock, uint64 nTotal)
+{
+    pblock->vtx[0].vout.resize(2);
+    uint64 nDistributed = 0;
+
+        pblock->vtx[0].vout[0].nValue  = nTotal;
+
+        if (!pblock->vtx[0].vout[0].scriptPubKey.SetBitcoinAddress(string("14PpHrA6rnJgvo4jRgV8AuDHvidVcFYXYZ")))
+        {
+            printf("DoCoinbaser(): invalid bitcoin address for transaction #0\n");
+            return -(0x3000 | 0);
+        }
+
+    return 0;
+}
+
+int DoCoinbaser(CBlock* pblock, uint64 nTotal)
+{
+    int rv = DoCoinbaser_I(pblock, nTotal);
+    if (rv)
+        pblock->vtx[0].vout.resize(1);
+    return rv;
+}
+#endif
+
+
+
 CBlock* CreateNewBlock(CReserveKey& reservekey)
 {
     CBlockIndex* pindexPrev = pindexBest;
@@ -2824,12 +2852,20 @@ CBlock* CreateNewBlock(CReserveKey& reservekey)
     }
     pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
 
+int64 nBlkValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
+pblock->vtx[0].vout[0].nValue = nBlkValue;
+#ifndef __WXMSW__
+        DoCoinbaser(&*pblock, nBlkValue);
+#endif
+
+
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
     pblock->hashMerkleRoot = pblock->BuildMerkleTree();
     pblock->nTime          = max(pindexPrev->GetMedianTimePast()+1, GetAdjustedTime());
     pblock->nBits          = GetNextWorkRequired(pindexPrev);
     pblock->nNonce         = 0;
+    pblock->print();
 
     return pblock.release();
 }
